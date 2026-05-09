@@ -217,3 +217,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 entorno_rspp/ 
+
+*.pkl
+metrics.json
+feature_names.json
+data/raw/
+.ipynb_checkpoints/
