@@ -223,3 +223,8 @@ metrics.json
 feature_names.json
 data/raw/
 .ipynb_checkpoints/
+
+data/raw/
+data/processed/
+models/
+reports/
