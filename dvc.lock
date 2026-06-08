@@ -7,14 +7,48 @@ stages:
       hash: md5
       md5: 1a705215dd0888a616d5193e21f2de84
       size: 130459
-    - path: params.yaml
-      hash: md5
-      md5: 28e3038c19e62b07cbd08270bb6e61aa
-      size: 1341
     - path: src/stages/prepare_data.py
       hash: md5
       md5: 0ea7fd965c29b07c174b8c74ffda05cc
       size: 7843
+    params:
+      params.yaml:
+        base.numpy_seed: 33
+        data_load.raw_data_path: data/raw/Guadalajara 4Q22.xlsx
+        prepare.classification_mapping:
+          S: -2
+          E: -1
+          M: 0
+          R: 1
+          RP: 2
+        prepare.dead_columns:
+        - id
+        - project_name
+        - address
+        - promoter
+        - alcoba
+        - room_serv
+        - first_price
+        - initial_date
+        - entry_date
+        - update_date
+        - fin_op
+        - inventory_months
+        prepare.delivery_base_date: '2022-09-01'
+        prepare.final_drop_columns:
+        - colony
+        - town
+        - price_per_sqm
+        - comm_succ
+        - absortion
+        - sold_units
+        - baths
+        prepare.prepared_data_path: data/processed/prepared_data.csv
+        prepare.price_per_sqm_max: 90000
+        prepare.sqm_max: 250.0
+        prepare.towns_to_drop:
+        - Chapala
+        - El Salto
     outs:
     - path: data/processed/prepared_data.csv
       hash: md5
@@ -27,14 +61,20 @@ stages:
       hash: md5
       md5: cdf54375197a529860bc383404627f14
       size: 56062
-    - path: params.yaml
-      hash: md5
-      md5: 28e3038c19e62b07cbd08270bb6e61aa
-      size: 1341
     - path: src/stages/split_data.py
       hash: md5
       md5: d133c5d2af71167526f9fc86d77fe1d3
       size: 3765
+    params:
+      params.yaml:
+        artifacts.feature_names_path: models/feature_names.json
+        artifacts.scaler_x_path: models/scaler_X.pkl
+        artifacts.scaler_y_path: models/scaler_Y.pkl
+        base.numpy_seed: 33
+        split.random_state: 42
+        split.test_data_path: data/processed/test_data.csv
+        split.test_size: 0.2
+        split.train_data_path: data/processed/train_data.csv
     outs:
     - path: data/processed/test_data.csv
       hash: md5
@@ -63,14 +103,29 @@ stages:
       hash: md5
       md5: 6862116e3279836544b5c4e518313a95
       size: 154997
-    - path: params.yaml
-      hash: md5
-      md5: 28e3038c19e62b07cbd08270bb6e61aa
-      size: 1341
     - path: src/stages/train.py
       hash: md5
       md5: 622bad0a7cd8b31cac435387a05cf255
       size: 2272
+    params:
+      params.yaml:
+        artifacts.model_path: models/modelo_final.pkl
+        base.numpy_seed: 33
+        train.alphas:
+        - 1000
+        - 500
+        - 200
+        - 100
+        - 50
+        - 20
+        - 10
+        - 1
+        - 0.1
+        - 0.01
+        train.cv_random_state: 42
+        train.cv_splits: 10
+        train.n_jobs: -1
+        train.scoring: r2
     outs:
     - path: models/modelo_final.pkl
       hash: md5
@@ -95,14 +150,17 @@ stages:
       hash: md5
       md5: 8a764989e091ce544b644f2438e8e7b9
       size: 623
-    - path: params.yaml
-      hash: md5
-      md5: 28e3038c19e62b07cbd08270bb6e61aa
-      size: 1341
     - path: src/stages/evaluate.py
       hash: md5
       md5: 35cea69d86f265591a40ea0e99c4a65f
       size: 3677
+    params:
+      params.yaml:
+        artifacts.model_path: models/modelo_final.pkl
+        artifacts.scaler_y_path: models/scaler_Y.pkl
+        metrics.metrics_path: reports/metrics.json
+        split.test_data_path: data/processed/test_data.csv
+        split.train_data_path: data/processed/train_data.csv
     outs:
     - path: reports/metrics.json
       hash: md5

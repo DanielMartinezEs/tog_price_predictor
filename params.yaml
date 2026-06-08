@@ -1,15 +1,13 @@
 base:
   numpy_seed: 33
-
 data_load:
-  raw_data_path: "data/raw/Guadalajara 4Q22.xlsx"
-
+  raw_data_path: data/raw/Guadalajara 4Q22.xlsx
 prepare:
-  prepared_data_path: "data/processed/prepared_data.csv"
-  delivery_base_date: "2022-09-01"
+  prepared_data_path: data/processed/prepared_data.csv
+  delivery_base_date: '2022-09-01'
   towns_to_drop:
-    - "Chapala"
-    - "El Salto"
+  - Chapala
+  - El Salto
   price_per_sqm_max: 90000
   sqm_max: 250.0
   classification_mapping:
@@ -19,56 +17,52 @@ prepare:
     R: 1
     RP: 2
   dead_columns:
-    - id
-    - project_name
-    - address
-    - promoter
-    - alcoba
-    - room_serv
-    - first_price
-    - initial_date
-    - entry_date
-    - update_date
-    - fin_op
-    - inventory_months
+  - id
+  - project_name
+  - address
+  - promoter
+  - alcoba
+  - room_serv
+  - first_price
+  - initial_date
+  - entry_date
+  - update_date
+  - fin_op
+  - inventory_months
   final_drop_columns:
-    - colony
-    - town
-    - price_per_sqm
-    - comm_succ
-    - absortion
-    - sold_units
-    - baths
-
+  - colony
+  - town
+  - price_per_sqm
+  - comm_succ
+  - absortion
+  - sold_units
+  - baths
 split:
   test_size: 0.2
   random_state: 42
-  train_data_path: "data/processed/train_data.csv"
-  test_data_path: "data/processed/test_data.csv"
-
+  train_data_path: data/processed/train_data.csv
+  test_data_path: data/processed/test_data.csv
 train:
-  model_type: "ridge"
-  scoring: "r2"
+  model_type: ridge
+  scoring: r2
   cv_splits: 10
   cv_random_state: 42
   n_jobs: -1
   alphas:
-    - 1000
-    - 500
-    - 200
-    - 100
-    - 50
-    - 20
-    - 10
-    - 1
-    - 0.1
-    - 0.01
-
+  - 1000
+  - 500
+  - 200
+  - 100
+  - 50
+  - 20
+  - 10
+  - 1
+  - 0.1
+  - 0.01
 artifacts:
-  model_path: "models/modelo_final.pkl"
-  scaler_x_path: "models/scaler_X.pkl"
-  scaler_y_path: "models/scaler_Y.pkl"
-  feature_names_path: "models/feature_names.json"
-
+  model_path: models/modelo_final.pkl
+  scaler_x_path: models/scaler_X.pkl
+  scaler_y_path: models/scaler_Y.pkl
+  feature_names_path: models/feature_names.json
 metrics:
-  metrics_path: "reports/metrics.json"
+  metrics_path: reports/metrics.json

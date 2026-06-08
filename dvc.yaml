@@ -3,8 +3,18 @@ stages:
     cmd: python src/stages/prepare_data.py
     deps:
       - src/stages/prepare_data.py
-      - params.yaml
       - data/raw/Guadalajara 4Q22.xlsx
+    params:
+      - base.numpy_seed
+      - data_load.raw_data_path
+      - prepare.prepared_data_path
+      - prepare.delivery_base_date
+      - prepare.towns_to_drop
+      - prepare.price_per_sqm_max
+      - prepare.sqm_max
+      - prepare.classification_mapping
+      - prepare.dead_columns
+      - prepare.final_drop_columns
     outs:
       - data/processed/prepared_data.csv
 
@@ -12,8 +22,16 @@ stages:
     cmd: python src/stages/split_data.py
     deps:
       - src/stages/split_data.py
-      - params.yaml
       - data/processed/prepared_data.csv
+    params:
+      - base.numpy_seed
+      - split.test_size
+      - split.random_state
+      - split.train_data_path
+      - split.test_data_path
+      - artifacts.scaler_x_path
+      - artifacts.scaler_y_path
+      - artifacts.feature_names_path
     outs:
       - data/processed/train_data.csv
       - data/processed/test_data.csv
@@ -25,8 +43,15 @@ stages:
     cmd: python src/stages/train.py
     deps:
       - src/stages/train.py
-      - params.yaml
       - data/processed/train_data.csv
+    params:
+      - base.numpy_seed
+      - train.cv_splits
+      - train.cv_random_state
+      - train.scoring
+      - train.n_jobs
+      - train.alphas
+      - artifacts.model_path
     outs:
       - models/modelo_final.pkl
 
@@ -34,10 +59,15 @@ stages:
     cmd: python src/stages/evaluate.py
     deps:
       - src/stages/evaluate.py
-      - params.yaml
       - data/processed/train_data.csv
       - data/processed/test_data.csv
       - models/modelo_final.pkl
       - models/scaler_Y.pkl
+    params:
+      - split.train_data_path
+      - split.test_data_path
+      - artifacts.model_path
+      - artifacts.scaler_y_path
+      - metrics.metrics_path
     metrics:
       - reports/metrics.json
