@@ -1,0 +1,43 @@
+stages:
+  prepare_data:
+    cmd: python src/stages/prepare_data.py
+    deps:
+      - src/stages/prepare_data.py
+      - params.yaml
+      - data/raw/Guadalajara 4Q22.xlsx
+    outs:
+      - data/processed/prepared_data.csv
+
+  split_data:
+    cmd: python src/stages/split_data.py
+    deps:
+      - src/stages/split_data.py
+      - params.yaml
+      - data/processed/prepared_data.csv
+    outs:
+      - data/processed/train_data.csv
+      - data/processed/test_data.csv
+      - models/scaler_X.pkl
+      - models/scaler_Y.pkl
+      - models/feature_names.json
+
+  train:
+    cmd: python src/stages/train.py
+    deps:
+      - src/stages/train.py
+      - params.yaml
+      - data/processed/train_data.csv
+    outs:
+      - models/modelo_final.pkl
+
+  evaluate:
+    cmd: python src/stages/evaluate.py
+    deps:
+      - src/stages/evaluate.py
+      - params.yaml
+      - data/processed/train_data.csv
+      - data/processed/test_data.csv
+      - models/modelo_final.pkl
+      - models/scaler_Y.pkl
+    metrics:
+      - reports/metrics.json

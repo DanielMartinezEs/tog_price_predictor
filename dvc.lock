@@ -1,0 +1,110 @@
+schema: '2.0'
+stages:
+  prepare_data:
+    cmd: python src/stages/prepare_data.py
+    deps:
+    - path: data/raw/Guadalajara 4Q22.xlsx
+      hash: md5
+      md5: 1a705215dd0888a616d5193e21f2de84
+      size: 130459
+    - path: params.yaml
+      hash: md5
+      md5: 28e3038c19e62b07cbd08270bb6e61aa
+      size: 1341
+    - path: src/stages/prepare_data.py
+      hash: md5
+      md5: 0ea7fd965c29b07c174b8c74ffda05cc
+      size: 7843
+    outs:
+    - path: data/processed/prepared_data.csv
+      hash: md5
+      md5: cdf54375197a529860bc383404627f14
+      size: 56062
+  split_data:
+    cmd: python src/stages/split_data.py
+    deps:
+    - path: data/processed/prepared_data.csv
+      hash: md5
+      md5: cdf54375197a529860bc383404627f14
+      size: 56062
+    - path: params.yaml
+      hash: md5
+      md5: 28e3038c19e62b07cbd08270bb6e61aa
+      size: 1341
+    - path: src/stages/split_data.py
+      hash: md5
+      md5: d133c5d2af71167526f9fc86d77fe1d3
+      size: 3765
+    outs:
+    - path: data/processed/test_data.csv
+      hash: md5
+      md5: b863b4c73929eed358eeef9c6d36150d
+      size: 39288
+    - path: data/processed/train_data.csv
+      hash: md5
+      md5: 6862116e3279836544b5c4e518313a95
+      size: 154997
+    - path: models/feature_names.json
+      hash: md5
+      md5: 7fe1b805532edf3eebcdfef7c3561ccb
+      size: 331
+    - path: models/scaler_X.pkl
+      hash: md5
+      md5: ea1c59afbf6f447127382ebb79244f74
+      size: 1007
+    - path: models/scaler_Y.pkl
+      hash: md5
+      md5: 8a764989e091ce544b644f2438e8e7b9
+      size: 623
+  train:
+    cmd: python src/stages/train.py
+    deps:
+    - path: data/processed/train_data.csv
+      hash: md5
+      md5: 6862116e3279836544b5c4e518313a95
+      size: 154997
+    - path: params.yaml
+      hash: md5
+      md5: 28e3038c19e62b07cbd08270bb6e61aa
+      size: 1341
+    - path: src/stages/train.py
+      hash: md5
+      md5: 622bad0a7cd8b31cac435387a05cf255
+      size: 2272
+    outs:
+    - path: models/modelo_final.pkl
+      hash: md5
+      md5: aea2a4a701ebaa429dfddd28ae673986
+      size: 667
+  evaluate:
+    cmd: python src/stages/evaluate.py
+    deps:
+    - path: data/processed/test_data.csv
+      hash: md5
+      md5: b863b4c73929eed358eeef9c6d36150d
+      size: 39288
+    - path: data/processed/train_data.csv
+      hash: md5
+      md5: 6862116e3279836544b5c4e518313a95
+      size: 154997
+    - path: models/modelo_final.pkl
+      hash: md5
+      md5: aea2a4a701ebaa429dfddd28ae673986
+      size: 667
+    - path: models/scaler_Y.pkl
+      hash: md5
+      md5: 8a764989e091ce544b644f2438e8e7b9
+      size: 623
+    - path: params.yaml
+      hash: md5
+      md5: 28e3038c19e62b07cbd08270bb6e61aa
+      size: 1341
+    - path: src/stages/evaluate.py
+      hash: md5
+      md5: 35cea69d86f265591a40ea0e99c4a65f
+      size: 3677
+    outs:
+    - path: reports/metrics.json
+      hash: md5
+      md5: 4d733bd9b8f9aa8f771a34304dea9d61
+      size: 247

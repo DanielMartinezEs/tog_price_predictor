@@ -228,3 +228,11 @@ data/raw/
 data/processed/
 models/
 reports/
+
+# TOG / DVC local outputs
+data/raw/*
+data/processed/*
+models/*
+reports/*
+!reports/metrics.json
+.ipynb_checkpoints/
