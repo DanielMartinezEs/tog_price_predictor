@@ -1,20 +1,54 @@
 # TOG Price Predictor
 
-Proyecto de Machine Learning para estimación de precios de departamentos en la Zona Metropolitana de Guadalajara.
+Proyecto de Machine Learning para la estimación de precios de departamentos en la Zona Metropolitana de Guadalajara.
 
-El proyecto incluye:
+El proyecto evolucionó desde un prototipo analítico hasta una solución reproducible y visual que permite a usuarios no técnicos capturar las características de un departamento y obtener una estimación de precio mediante un modelo de Machine Learning.
 
-- Prototipo analítico desarrollado en Fase 1.
-- Pipeline reproducible de Machine Learning con DVC.
-- Configuración centralizada en `params.yaml`.
-- Scripts reutilizables para preparación de datos, split, entrenamiento, evaluación e inferencia.
-- Métricas reproducibles del modelo ganador.
-- Aplicación visual desarrollada con Streamlit.
-- Inferencia directa desde la aplicación utilizando el modelo entrenado.
+La versión estable disponible en la rama `main` incluye:
+
+* Prototipo y comparación de modelos.
+* Modelo final Ridge Regression.
+* Pipeline reproducible con DVC.
+* Configuración centralizada mediante `params.yaml`.
+* Scripts reutilizables para preparación, entrenamiento, evaluación e inferencia.
+* Tracking de métricas.
+* Aplicación visual desarrollada con Streamlit.
+* Validaciones de entrada.
+* Detección de valores fuera del dominio observado durante entrenamiento.
+* Presentación del precio estimado y precio por metro cuadrado.
+* Explicación sencilla de resultados para usuarios no técnicos.
 
 ---
 
-## 1. Estructura principal
+## 1. Arquitectura general
+
+```text
+Datos privados
+     ↓
+Preparación
+     ↓
+Train / Test Split
+     ↓
+Ridge Regression
+     ↓
+Evaluación
+     ↓
+Artefactos entrenados
+     ↓
+src/predict.py
+     ↓
+Streamlit
+     ↓
+Usuario
+```
+
+La aplicación visual funciona únicamente como capa de interacción.
+
+La predicción del precio continúa siendo responsabilidad del modelo estadístico entrenado.
+
+---
+
+## 2. Estructura principal
 
 ```text
 tog_dme/
@@ -28,7 +62,6 @@ tog_dme/
 │
 ├── data/
 │   ├── raw/
-│   │   ├── Guadalajara 4Q22.xlsx
 │   │   └── README.md
 │   └── processed/
 │
@@ -39,6 +72,7 @@ tog_dme/
 │
 └── src/
     ├── predict.py
+    ├── validation.py
     │
     └── stages/
         ├── prepare_data.py
@@ -47,11 +81,11 @@ tog_dme/
         └── evaluate.py
 ```
 
+El archivo original de datos no forma parte del repositorio debido a restricciones de confidencialidad.
+
 ---
 
-## 2. Datos privados
-
-El archivo original de datos no se versiona en GitHub por confidencialidad.
+## 3. Dataset privado
 
 El pipeline espera encontrar el archivo:
 
@@ -59,9 +93,18 @@ El pipeline espera encontrar el archivo:
 data/raw/Guadalajara 4Q22.xlsx
 ```
 
-Para ejecutar el proyecto, solicitar el archivo privado al autor y colocarlo exactamente en esa ruta.
+Este archivo no se versiona en GitHub.
 
-Más detalles en:
+Para reproducir el proyecto:
+
+1. Solicitar el archivo al autor.
+2. Colocarlo exactamente en:
+
+```text
+data/raw/Guadalajara 4Q22.xlsx
+```
+
+3. Consultar instrucciones adicionales en:
 
 ```text
 data/raw/README.md
@@ -69,73 +112,117 @@ data/raw/README.md
 
 ---
 
-## 3. Instalación
+## 4. Preparar el entorno
 
-Crear entorno virtual:
+Se recomienda utilizar un entorno virtual exclusivo para el proyecto.
+
+Desde la raíz del repositorio:
 
 ```bash
 python -m venv entorno_rspp
 ```
 
-Activar entorno en Windows:
+Activar en Windows CMD:
 
 ```bash
 entorno_rspp\Scripts\activate
 ```
 
-Instalar dependencias:
+Después instalar las dependencias:
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
+```
+
+La versión de `scikit-learn` está fijada en:
+
+```text
+scikit-learn==1.4.2
+```
+
+Esto permite mantener compatibilidad con los artefactos serializados del modelo.
+
+El entorno virtual debe crearse localmente y no debe versionarse en Git.
+
+---
+
+## 5. Verificar el entorno
+
+Con el entorno virtual activado puede comprobarse el intérprete utilizado con:
+
+```bash
+python -c "import sys; print(sys.executable)"
+```
+
+La ruta debe apuntar al Python ubicado dentro de:
+
+```text
+tog_dme\entorno_rspp\Scripts\python.exe
+```
+
+Para comprobar la integridad de las dependencias:
+
+```bash
+python -m pip check
+```
+
+Una instalación correcta debe indicar:
+
+```text
+No broken requirements found.
 ```
 
 ---
 
-## 4. Ejecutar pipeline completo
+## 6. Pipeline reproducible con DVC
 
-Con el archivo raw colocado en:
+El pipeline está definido en:
 
 ```text
-data/raw/Guadalajara 4Q22.xlsx
+dvc.yaml
 ```
 
-ejecutar:
+y contiene las siguientes etapas:
+
+```text
+prepare_data
+     ↓
+split_data
+     ↓
+train
+     ↓
+evaluate
+```
+
+Con el dataset privado disponible, ejecutar:
 
 ```bash
 dvc repro
 ```
 
-Para forzar la reproducción completa:
+Para forzar la ejecución completa:
 
 ```bash
 dvc repro -f
 ```
 
-El pipeline ejecuta las siguientes etapas:
-
-```text
-prepare_data
-    ↓
-split_data
-    ↓
-train
-    ↓
-evaluate
-```
-
 ---
 
-## 5. Revisar estado del pipeline
+## 7. Revisar estado del pipeline
 
-Para comprobar si existen cambios pendientes en el pipeline:
+Para comprobar si el pipeline está actualizado:
 
 ```bash
 dvc status
 ```
 
-Si todo está actualizado, DVC deberá indicar que los datos y el pipeline están al día.
+El resultado esperado cuando no existen cambios es:
 
-Para visualizar el DAG:
+```text
+Data and pipelines are up to date.
+```
+
+Para visualizar el flujo:
 
 ```bash
 dvc dag
@@ -143,33 +230,17 @@ dvc dag
 
 ---
 
-## 6. Revisar métricas
+## 8. Modelo seleccionado
 
-Ejecutar:
+Durante la etapa de prototipado se compararon distintos algoritmos de Machine Learning.
 
-```bash
-dvc metrics show
-```
-
-Métricas esperadas del modelo actual:
-
-```text
-R2_test ≈ 0.85867
-RMSE_test_pesos ≈ 724,228.73
-MAE_test_pesos ≈ 549,476.61
-```
-
----
-
-## 7. Modelo actual
-
-El modelo seleccionado después de comparar diferentes algoritmos fue:
+El modelo seleccionado fue:
 
 ```text
 Ridge Regression
 ```
 
-Métricas principales:
+Las métricas reproducidas en el conjunto de prueba son aproximadamente:
 
 ```text
 R2_test = 0.858668
@@ -177,13 +248,46 @@ RMSE_test_pesos = 724,228.73
 MAE_test_pesos = 549,476.61
 ```
 
-El modelo explica aproximadamente el 85.9 % de la variabilidad observada en el conjunto de prueba.
+Por lo tanto, el modelo explica aproximadamente el 85.9 % de la variabilidad del precio observada en el conjunto de prueba.
 
 ---
 
-## 8. Ejecutar predicción individual
+## 9. Consultar métricas con DVC
 
-Después de ejecutar el pipeline, es posible realizar una predicción directamente desde terminal:
+Ejecutar:
+
+```bash
+dvc metrics show
+```
+
+Salida esperada aproximada:
+
+```text
+R2_test             0.85867
+R2_train            0.87228
+MAE_test_pesos      549476.61
+MAE_train_pesos     598614.59
+RMSE_test_pesos     724228.73
+RMSE_train_pesos    820764.76
+```
+
+Las métricas también se encuentran almacenadas en:
+
+```text
+reports/metrics.json
+```
+
+---
+
+## 10. Inferencia desde terminal
+
+La lógica de inferencia está centralizada en:
+
+```text
+src/predict.py
+```
+
+Después de contar con los artefactos entrenados, ejecutar:
 
 ```bash
 python src\predict.py
@@ -191,20 +295,20 @@ python src\predict.py
 
 El script:
 
-1. Carga el modelo entrenado.
+1. Carga el modelo Ridge entrenado.
 2. Carga los scalers utilizados durante entrenamiento.
-3. Recupera las columnas esperadas por el modelo.
+3. Recupera los nombres de las variables esperadas.
 4. Construye el registro de entrada.
-5. Ejecuta la transformación de variables.
-6. Genera la predicción.
+5. Aplica las transformaciones correspondientes.
+6. Ejecuta la predicción.
 7. Convierte el resultado nuevamente a pesos mexicanos.
 
-Ejemplo de entrada:
+Ejemplo de control:
 
 ```text
 Municipio: Zapopan
 Clasificación: R
-Superficie: 85 m²
+Superficie interior: 85 m²
 Terraza: 0 m²
 Recámaras: 2
 Estacionamientos: 1
@@ -216,7 +320,7 @@ Inventario: 30
 Meses para entrega: 12
 ```
 
-Resultado aproximado:
+Resultado:
 
 ```text
 $3,903,813.61 MXN
@@ -224,9 +328,7 @@ $3,903,813.61 MXN
 
 ---
 
-## 9. Aplicación visual con Streamlit
-
-El proyecto incluye una aplicación visual desarrollada con Streamlit para permitir que un usuario no técnico utilice el modelo sin interactuar directamente con los scripts de Python.
+## 11. Aplicación visual con Streamlit
 
 La aplicación se encuentra en:
 
@@ -234,13 +336,7 @@ La aplicación se encuentra en:
 app.py
 ```
 
-La interfaz utiliza directamente las funciones de inferencia definidas en:
-
-```text
-src/predict.py
-```
-
-La arquitectura actual es:
+Su arquitectura es:
 
 ```text
 Usuario
@@ -249,6 +345,8 @@ Streamlit
    ↓
 app.py
    ↓
+Validaciones
+   ↓
 src/predict.py
    ↓
 Ridge Regression
@@ -256,21 +354,15 @@ Ridge Regression
 Precio estimado
 ```
 
-Streamlit funciona únicamente como capa visual y no reemplaza el modelo estadístico.
+La interfaz no implementa un segundo modelo ni una lógica independiente de predicción.
+
+Utiliza directamente la misma lógica de inferencia de `src/predict.py`.
 
 ---
 
-## 10. Ejecutar la aplicación
+## 12. Ejecutar la aplicación
 
-Antes de iniciar la aplicación deben existir los artefactos generados por el pipeline.
-
-Si es necesario, ejecutar primero:
-
-```bash
-dvc repro
-```
-
-Después, desde la raíz del proyecto:
+Desde la raíz del proyecto, con el entorno virtual activado:
 
 ```bash
 python -m streamlit run app.py
@@ -282,38 +374,117 @@ La aplicación se abrirá normalmente en:
 http://localhost:8501
 ```
 
----
-
-## 11. Funcionalidad actual de la aplicación
-
-La primera versión permite:
-
-- Seleccionar municipio.
-- Seleccionar clasificación SOFTEC.
-- Capturar superficie interior.
-- Capturar superficie de terraza.
-- Capturar número de recámaras.
-- Capturar cajones de estacionamiento.
-- Capturar niveles del desarrollo.
-- Capturar meses en venta.
-- Capturar unidades totales.
-- Capturar unidades del master plan.
-- Capturar inventario disponible.
-- Capturar meses para entrega.
-- Ejecutar una predicción.
-- Mostrar el precio estimado en pesos mexicanos.
-- Mostrar R², MAE y RMSE del modelo.
+Se recomienda utilizar `python -m streamlit` para garantizar que Streamlit se ejecute con el mismo intérprete del entorno virtual activo.
 
 ---
 
-## 12. Validación de la aplicación
+## 13. Funcionalidades de la aplicación
 
-La aplicación fue validada utilizando los mismos valores del ejemplo de inferencia:
+La versión estable permite capturar:
+
+### Características del departamento
+
+* Municipio.
+* Clasificación SOFTEC.
+* Superficie interior.
+* Superficie de terraza.
+* Número de recámaras.
+* Cajones de estacionamiento.
+
+### Características del desarrollo
+
+* Número de niveles.
+* Meses en venta.
+* Unidades totales.
+* Unidades del master plan.
+* Inventario disponible.
+* Meses para entrega.
+
+Después de ejecutar la predicción, la aplicación muestra:
+
+* Precio estimado.
+* Precio estimado por metro cuadrado interior.
+* Interpretación sencilla del resultado.
+* Error absoluto promedio del modelo como referencia.
+* Resumen de los datos utilizados.
+* R², MAE y RMSE en una sección técnica desplegable.
+
+---
+
+## 14. Validaciones de entrada
+
+La aplicación incorpora validaciones antes de enviar información al modelo.
+
+Por ejemplo:
+
+```text
+Inventario disponible > Unidades totales
+```
+
+es considerado un dato inconsistente y bloquea la predicción.
+
+También existe un dominio explícito para superficie definido en:
+
+```text
+params.yaml
+```
+
+con:
+
+```yaml
+sqm_max: 250.0
+```
+
+Una superficie superior a ese valor no es aceptada por la aplicación.
+
+---
+
+## 15. Control de extrapolación
+
+Además de las validaciones lógicas, la aplicación compara las entradas numéricas contra los rangos observados en el conjunto utilizado para entrenar el modelo.
+
+La lógica se encuentra en:
+
+```text
+src/validation.py
+```
+
+Los valores del conjunto de entrenamiento son llevados nuevamente a su escala original mediante el mismo `scaler_X` utilizado por el modelo.
+
+Esto permite distinguir entre:
+
+```text
+Entrada dentro del dominio
+        ↓
+Predicción normal
+```
+
+```text
+Entrada inconsistente
+        ↓
+Predicción bloqueada
+```
+
+```text
+Entrada válida pero fuera del rango observado
+        ↓
+Advertencia de extrapolación
+        ↓
+Predicción permitida
+```
+
+Una extrapolación no implica automáticamente que la predicción sea incorrecta, pero indica que el resultado debe interpretarse con mayor precaución.
+
+---
+
+## 16. Validación de la aplicación
+
+Se utilizó como caso de control el mismo ejemplo de inferencia ejecutado desde terminal:
 
 ```text
 Municipio: Zapopan
 Clasificación: R
-Superficie: 85 m²
+Superficie interior: 85 m²
 Terraza: 0 m²
 Recámaras: 2
 Estacionamientos: 1
@@ -328,7 +499,15 @@ Meses para entrega: 12
 La aplicación genera:
 
 ```text
+Precio estimado:
 $3,903,814 MXN
+```
+
+y:
+
+```text
+Precio estimado por m² interior:
+$45,927 MXN/m²
 ```
 
 La diferencia respecto a la salida de terminal:
@@ -337,78 +516,213 @@ La diferencia respecto a la salida de terminal:
 $3,903,813.61 MXN
 ```
 
-se debe únicamente al redondeo visual de la aplicación.
-
-Métricas mostradas:
-
-```text
-R² Test: 0.859
-MAE: $549,477 MXN
-RMSE: $724,229 MXN
-```
+se debe únicamente al redondeo utilizado para presentar el resultado en la interfaz.
 
 ---
 
-## 13. Fases del proyecto
+## 17. Fases del proyecto
 
-### Fase 1 — Prototipo
+### Fase 1 — Prototipo analítico
 
-Se desarrolló un prototipo monolítico y se compararon diferentes algoritmos de Machine Learning.
+Se desarrolló un prototipo monolítico para:
 
-Modelo ganador:
+* Explorar los datos.
+* Preparar variables.
+* Entrenar diferentes algoritmos.
+* Comparar su desempeño.
+* Seleccionar el modelo final.
 
-```text
-Ridge Regression
-```
+El algoritmo seleccionado fue Ridge Regression.
+
+---
 
 ### Fase 2 — Industrialización
 
-Se reorganizó el proyecto utilizando:
+El prototipo fue transformado en un proyecto reproducible utilizando:
 
-- DVC.
-- Pipeline reproducible.
-- Scripts reutilizables.
-- Configuración centralizada.
-- Tracking de métricas.
-- Inferencia independiente.
+* DVC.
+* Pipeline por etapas.
+* Configuración centralizada.
+* Scripts reutilizables.
+* Separación entre entrenamiento e inferencia.
+* Tracking de métricas.
+* Control de artefactos.
 
-### Fase 3 — Aplicación visual e IA generativa
+El pipeline final es:
 
-Actualmente se encuentra implementada la primera versión de la aplicación visual con Streamlit.
-
-La siguiente etapa contempla mejorar la experiencia para usuarios no técnicos y posteriormente incorporar una capa opcional de IA generativa.
+```text
+prepare_data
+→ split_data
+→ train
+→ evaluate
+```
 
 ---
 
-## 14. Próximos pasos
+### Fase 3 — Aplicación visual
 
-Las siguientes mejoras previstas son:
+Se desarrolló una capa visual con Streamlit para facilitar el consumo del modelo por usuarios no técnicos.
 
-1. Mejorar la experiencia visual de la aplicación.
-2. Simplificar y explicar los campos para usuarios no técnicos.
-3. Mejorar la presentación e interpretación del precio estimado.
-4. Agregar información complementaria como precio por metro cuadrado.
-5. Incorporar explicaciones sencillas del resultado.
-6. Incorporar opcionalmente IA generativa para interpretar consultas en lenguaje natural.
-7. Convertir consultas de lenguaje natural a las variables estructuradas utilizadas por el modelo.
-8. Utilizar IA generativa para explicar resultados sin sustituir la predicción estadística.
+La fase incorporó:
 
-La arquitectura futura propuesta es:
+* Formulario de captura.
+* Integración directa con la inferencia.
+* Precio estimado.
+* Precio estimado por metro cuadrado.
+* Presentación de métricas.
+* Explicación sencilla del resultado.
+* Ayudas de captura.
+* Validaciones lógicas.
+* Límites de dominio.
+* Advertencias de extrapolación.
+* Visualización de rangos observados durante entrenamiento.
+
+La aplicación fue validada utilizando el mismo caso de control empleado por `src/predict.py`.
+
+---
+
+## 18. IA generativa como extensión opcional
+
+Durante la Fase 3 se exploró una arquitectura opcional para incorporar IA generativa.
+
+El objetivo conceptual es permitir una interacción como:
 
 ```text
-Consulta del usuario
+Usuario escribe una descripción
         ↓
-IA generativa
+LLM extrae variables estructuradas
         ↓
-Extracción de variables
+Usuario revisa o completa los datos
         ↓
-Modelo Ridge Regression
+Ridge Regression calcula el precio
         ↓
-Predicción estadística
-        ↓
-IA generativa
-        ↓
-Explicación del resultado
+LLM puede explicar el resultado
 ```
 
-El modelo de Machine Learning continuará siendo responsable de la predicción de precio. La IA generativa funcionará únicamente como capa de interpretación e interacción.
+Una regla fundamental de esta arquitectura es:
+
+> El modelo generativo no sustituye al modelo estadístico encargado de estimar el precio.
+
+La predicción continuaría siendo responsabilidad de Ridge Regression.
+
+La integración experimental de IA se mantiene separada de la versión estable debido a que requiere credenciales externas y consumo de un servicio de API.
+
+El prototipo se encuentra en la rama:
+
+```text
+feature/optional-generative-ai
+```
+
+y no forma parte de los requisitos necesarios para ejecutar la aplicación estable disponible en:
+
+```text
+main
+```
+
+---
+
+## 19. Versión estable
+
+La rama recomendada para evaluación y reproducción del proyecto es:
+
+```text
+main
+```
+
+Esta versión:
+
+* No requiere una API de IA generativa.
+* No requiere credenciales externas.
+* Ejecuta directamente el modelo Ridge.
+* Es reproducible mediante `requirements.txt`.
+* Utiliza DVC para reproducir el pipeline.
+* Incluye la aplicación Streamlit.
+* Incluye validaciones de entrada.
+* Incluye control de extrapolación.
+
+---
+
+## 20. Limitaciones
+
+La herramienta debe interpretarse como un sistema de estimación y no como una valuación inmobiliaria formal.
+
+Entre sus principales limitaciones se encuentran:
+
+* Dependencia de la representatividad del dataset disponible.
+* Posible pérdida de precisión en casos alejados del dominio de entrenamiento.
+* Dependencia de las variables incluidas en el dataset original.
+* Ausencia de variables externas que podrían influir en el precio.
+* El MAE representa un error promedio de evaluación y no constituye un intervalo de confianza para una predicción individual.
+
+---
+
+## 21. Trabajo futuro
+
+Entre las posibles extensiones se encuentran:
+
+1. Incorporar nuevas fuentes de datos.
+2. Actualizar periódicamente el dataset.
+3. Evaluar modelos adicionales.
+4. Incorporar nuevas variables inmobiliarias y geográficas.
+5. Agregar mecanismos más avanzados de explicabilidad.
+6. Publicar la aplicación en un entorno accesible vía web.
+7. Retomar la integración opcional de IA generativa.
+8. Interpretar consultas inmobiliarias en lenguaje natural.
+9. Generar explicaciones personalizadas manteniendo al modelo estadístico como responsable de la predicción.
+10. Evaluar estrategias de monitoreo y reentrenamiento del modelo.
+
+---
+
+## 22. Resumen de ejecución
+
+Para un evaluador que ya cuenta con el archivo privado:
+
+```bash
+python -m venv entorno_rspp
+```
+
+```bash
+entorno_rspp\Scripts\activate
+```
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Colocar:
+
+```text
+data/raw/Guadalajara 4Q22.xlsx
+```
+
+Ejecutar:
+
+```bash
+dvc repro
+```
+
+Verificar:
+
+```bash
+dvc status
+```
+
+Consultar métricas:
+
+```bash
+dvc metrics show
+```
+
+Probar inferencia:
+
+```bash
+python src\predict.py
+```
+
+Ejecutar aplicación:
+
+```bash
+python -m streamlit run app.py
+```
+
+Con estos pasos es posible reproducir el pipeline y utilizar la versión estable de TOG Price Predictor.
