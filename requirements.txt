@@ -11,3 +11,5 @@ ipykernel>=6.0
 matplotlib>=3.7
 seaborn>=0.12
 streamlit==1.32.0
+openai==3.0.0
+pydantic==2.13.4
