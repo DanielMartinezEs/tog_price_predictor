@@ -1,5 +1,5 @@
 # TOG PRICE PREDICTOR - STREAMLIT APP
-# V1.2 - Interfaz amigable, ayudas de captura y validaciones.
+# Versión visual robusta previa a integración de IA generativa.
 
 from pathlib import Path
 import json
@@ -11,6 +11,11 @@ from src.predict import (
     predict_price,
     get_available_towns,
     get_classification_options,
+)
+
+from src.validation import (
+    get_training_ranges,
+    validate_prediction_inputs,
 )
 
 
@@ -34,6 +39,7 @@ metrics_path = Path("reports/metrics.json")
 metrics = {}
 
 if metrics_path.exists():
+
     with open(metrics_path, "r", encoding="utf-8") as f:
         metrics = json.load(f)
 
@@ -47,7 +53,8 @@ st.title("🏢 TOG Price Predictor")
 st.write(
     """
     Estima el precio de un departamento en la Zona Metropolitana
-    de Guadalajara a partir de sus características y las del desarrollo.
+    de Guadalajara a partir de sus características y las del
+    desarrollo.
     """
 )
 
@@ -74,8 +81,7 @@ classifications = get_classification_options()
 st.subheader("1. Captura las características")
 
 st.write(
-    "Completa los datos del departamento y del desarrollo. "
-    "Los campos incluyen ayudas para facilitar la captura."
+    "Completa los datos del departamento y del desarrollo."
 )
 
 with st.form("prediction_form"):
@@ -94,8 +100,7 @@ with st.form("prediction_form"):
             "Municipio",
             options=towns,
             help=(
-                "Municipio de la Zona Metropolitana de Guadalajara "
-                "donde se ubica el departamento."
+                "Municipio donde se ubica el departamento."
             ),
         )
 
@@ -104,8 +109,7 @@ with st.form("prediction_form"):
             options=classifications,
             help=(
                 "Código de clasificación utilizado en el dataset "
-                "original. Se conserva el código SOFTEC para no "
-                "alterar la variable que utiliza el modelo."
+                "original y por el modelo."
             ),
         )
 
@@ -116,8 +120,7 @@ with st.form("prediction_form"):
             step=1.0,
             format="%.1f",
             help=(
-                "Superficie interior habitable del departamento, "
-                "sin incluir la terraza."
+                "Superficie interior habitable, sin incluir terraza."
             ),
         )
 
@@ -128,8 +131,7 @@ with st.form("prediction_form"):
             step=1.0,
             format="%.1f",
             help=(
-                "Superficie de terraza reportada para la unidad. "
-                "Si no tiene terraza, captura 0."
+                "Si el departamento no tiene terraza, captura 0."
             ),
         )
 
@@ -138,7 +140,6 @@ with st.form("prediction_form"):
             min_value=0,
             value=2,
             step=1,
-            help="Número de recámaras del departamento.",
         )
 
         park_u = st.number_input(
@@ -146,10 +147,6 @@ with st.form("prediction_form"):
             min_value=0,
             value=1,
             step=1,
-            help=(
-                "Número de cajones de estacionamiento asignados "
-                "a la unidad."
-            ),
         )
 
     # --------------------------------------------------------
@@ -165,9 +162,6 @@ with st.form("prediction_form"):
             min_value=1,
             value=8,
             step=1,
-            help=(
-                "Número de niveles reportados para el desarrollo."
-            ),
         )
 
         months_in_sale = st.number_input(
@@ -176,7 +170,7 @@ with st.form("prediction_form"):
             value=12,
             step=1,
             help=(
-                "Número de meses que el desarrollo lleva "
+                "Meses que el desarrollo lleva "
                 "en comercialización."
             ),
         )
@@ -186,10 +180,6 @@ with st.form("prediction_form"):
             min_value=1,
             value=100,
             step=1,
-            help=(
-                "Número total de unidades reportadas para "
-                "el desarrollo."
-            ),
         )
 
         master_plan_units = st.number_input(
@@ -197,10 +187,6 @@ with st.form("prediction_form"):
             min_value=1,
             value=100,
             step=1,
-            help=(
-                "Número de unidades reportadas en el master plan "
-                "del proyecto."
-            ),
         )
 
         inventory = st.number_input(
@@ -208,10 +194,6 @@ with st.form("prediction_form"):
             min_value=0,
             value=30,
             step=1,
-            help=(
-                "Número de unidades reportadas actualmente como "
-                "inventario disponible."
-            ),
         )
 
         months_to_delivery = st.number_input(
@@ -219,10 +201,6 @@ with st.form("prediction_form"):
             min_value=0,
             value=12,
             step=1,
-            help=(
-                "Número de meses reportados hasta la entrega "
-                "del desarrollo."
-            ),
         )
 
     st.write("")
@@ -239,28 +217,67 @@ with st.form("prediction_form"):
 
 if submitted:
 
-    # --------------------------------------------------------
-    # INPUT VALIDATION
-    # --------------------------------------------------------
+    input_values = {
+        "sqm": sqm,
+        "terrace": terrace,
+        "bhk": bhk,
+        "park_u": park_u,
+        "levels": levels,
+        "months_in_sale": months_in_sale,
+        "total_units": total_units,
+        "master_plan_units": master_plan_units,
+        "inventory": inventory,
+        "months_to_delivery": months_to_delivery,
+    }
 
-    validation_errors = []
-
-    if inventory > total_units:
-        validation_errors.append(
-            "El inventario disponible no puede ser mayor "
-            "que las unidades totales del desarrollo."
+    validation_errors, validation_warnings = (
+        validate_prediction_inputs(
+            input_values
         )
+    )
+
+    # --------------------------------------------------------
+    # BLOCKING ERRORS
+    # --------------------------------------------------------
 
     if validation_errors:
 
         st.divider()
 
-        st.error("Revisa los datos capturados antes de continuar.")
+        st.error(
+            "Revisa los datos capturados antes de continuar."
+        )
 
         for validation_error in validation_errors:
-            st.write(f"- {validation_error}")
+
+            st.write(
+                f"- {validation_error}"
+            )
 
     else:
+
+        # ----------------------------------------------------
+        # EXTRAPOLATION WARNINGS
+        # ----------------------------------------------------
+
+        if validation_warnings:
+
+            st.warning(
+                "Algunos valores están fuera de los rangos "
+                "observados durante el entrenamiento. "
+                "La predicción representa una extrapolación "
+                "y debe interpretarse con mayor precaución."
+            )
+
+            with st.expander(
+                "Ver advertencias de rango"
+            ):
+
+                for warning in validation_warnings:
+
+                    st.write(
+                        f"- {warning}"
+                    )
 
         try:
 
@@ -279,13 +296,19 @@ if submitted:
                 months_to_delivery=months_to_delivery,
             )
 
-            prediction = predict_price(input_df)
+            prediction = predict_price(
+                input_df
+            )
 
-            price_per_sqm = prediction / sqm
+            price_per_sqm = (
+                prediction / sqm
+            )
 
             st.divider()
 
-            st.subheader("2. Resultado de la estimación")
+            st.subheader(
+                "2. Resultado de la estimación"
+            )
 
             result_col1, result_col2 = st.columns(2)
 
@@ -300,7 +323,9 @@ if submitted:
 
                 st.metric(
                     label="Precio estimado por m² interior",
-                    value=f"${price_per_sqm:,.0f} MXN/m²",
+                    value=(
+                        f"${price_per_sqm:,.0f} MXN/m²"
+                    ),
                 )
 
             st.success(
@@ -308,10 +333,12 @@ if submitted:
             )
 
             # ------------------------------------------------
-            # SIMPLE EXPLANATION
+            # SIMPLE INTERPRETATION
             # ------------------------------------------------
 
-            st.markdown("### ¿Cómo interpretar este resultado?")
+            st.markdown(
+                "### ¿Cómo interpretar este resultado?"
+            )
 
             st.write(
                 f"""
@@ -328,21 +355,31 @@ if submitted:
                 """
             )
 
+            if validation_warnings:
+
+                st.warning(
+                    "Esta estimación utiliza uno o más valores "
+                    "fuera del rango observado durante el "
+                    "entrenamiento del modelo."
+                )
+
             if "MAE_test_pesos" in metrics:
 
-                mae = metrics["MAE_test_pesos"]
+                mae = metrics[
+                    "MAE_test_pesos"
+                ]
 
                 st.info(
-                    f"Como referencia, en el conjunto de prueba el "
-                    f"modelo tuvo un error absoluto promedio (MAE) "
-                    f"de ${mae:,.0f} MXN."
+                    f"Como referencia, en el conjunto de prueba "
+                    f"el modelo tuvo un error absoluto promedio "
+                    f"(MAE) de ${mae:,.0f} MXN."
                 )
 
                 st.caption(
                     "El MAE describe el error promedio observado "
-                    "durante la evaluación del modelo. No representa "
-                    "un intervalo de confianza para esta predicción "
-                    "individual."
+                    "durante la evaluación del modelo. "
+                    "No representa un intervalo de confianza "
+                    "para esta predicción individual."
                 )
 
             # ------------------------------------------------
@@ -353,7 +390,9 @@ if submitted:
                 "Ver datos utilizados para esta estimación"
             ):
 
-                summary_col1, summary_col2 = st.columns(2)
+                summary_col1, summary_col2 = (
+                    st.columns(2)
+                )
 
                 with summary_col1:
 
@@ -381,7 +420,8 @@ if submitted:
                     )
 
                     st.write(
-                        f"**Estacionamientos:** {park_u}"
+                        f"**Estacionamientos:** "
+                        f"{park_u}"
                     )
 
                 with summary_col2:
@@ -391,11 +431,13 @@ if submitted:
                     )
 
                     st.write(
-                        f"**Meses en venta:** {months_in_sale}"
+                        f"**Meses en venta:** "
+                        f"{months_in_sale}"
                     )
 
                     st.write(
-                        f"**Unidades totales:** {total_units}"
+                        f"**Unidades totales:** "
+                        f"{total_units}"
                     )
 
                     st.write(
@@ -415,7 +457,8 @@ if submitted:
         except Exception as error:
 
             st.error(
-                f"No fue posible generar la predicción: {error}"
+                f"No fue posible generar la predicción: "
+                f"{error}"
             )
 
 
@@ -425,18 +468,22 @@ if submitted:
 
 st.divider()
 
-with st.expander("📊 Información técnica del modelo"):
+with st.expander(
+    "📊 Información técnica del modelo"
+):
 
     st.write(
         """
         El modelo actual es **Ridge Regression**.
-        Las siguientes métricas corresponden al conjunto de prueba.
+        Las métricas corresponden al conjunto de prueba.
         """
     )
 
     if metrics:
 
-        metric_col1, metric_col2, metric_col3 = st.columns(3)
+        metric_col1, metric_col2, metric_col3 = (
+            st.columns(3)
+        )
 
         with metric_col1:
 
@@ -461,11 +508,11 @@ with st.expander("📊 Información técnica del modelo"):
 
         st.write(
             """
-            **R²:** proporción de la variabilidad del precio que el
-            modelo logra explicar en los datos de prueba.
+            **R²:** proporción de la variabilidad del precio que
+            el modelo logra explicar en los datos de prueba.
 
-            **MAE:** diferencia absoluta promedio entre el precio real
-            y el precio estimado.
+            **MAE:** diferencia absoluta promedio entre el precio
+            real y el precio estimado.
 
             **RMSE:** medida del error que penaliza con mayor fuerza
             las predicciones con errores grandes.
@@ -477,6 +524,56 @@ with st.expander("📊 Información técnica del modelo"):
         st.warning(
             "No se encontró reports/metrics.json. "
             "Ejecuta primero: dvc repro"
+        )
+
+
+# ============================================================
+# TRAINING DOMAIN INFORMATION
+# ============================================================
+
+with st.expander(
+    "🔎 Rangos observados durante el entrenamiento"
+):
+
+    training_ranges = get_training_ranges()
+
+    if training_ranges:
+
+        st.write(
+            """
+            Estos rangos corresponden a los valores mínimo y máximo
+            observados en el conjunto utilizado para entrenar el
+            modelo. Una entrada fuera de estos rangos implica que
+            el modelo está realizando una extrapolación.
+            """
+        )
+
+        range_labels = {
+            "sqm": "Superficie interior (m²)",
+            "terrace": "Terraza (m²)",
+            "bhk": "Recámaras",
+            "park_u": "Estacionamientos",
+            "levels": "Niveles",
+            "months_in_sale": "Meses en venta",
+            "total_units": "Unidades totales",
+            "master_plan_units": "Unidades master plan",
+            "inventory": "Inventario",
+            "months_to_delivery": "Meses para entrega",
+        }
+
+        for feature, values in training_ranges.items():
+
+            st.write(
+                f"**{range_labels.get(feature, feature)}:** "
+                f"{values['min']:,.1f} a "
+                f"{values['max']:,.1f}"
+            )
+
+    else:
+
+        st.warning(
+            "No fue posible leer los rangos del conjunto "
+            "de entrenamiento."
         )
 
 
