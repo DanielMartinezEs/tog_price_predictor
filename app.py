@@ -1,5 +1,5 @@
 # TOG PRICE PREDICTOR - STREAMLIT APP
-# Primera versión visual de la herramienta de predicción.
+# V1.1 - Interfaz orientada a usuarios no técnicos.
 
 from pathlib import Path
 import json
@@ -21,8 +21,21 @@ from src.predict import (
 st.set_page_config(
     page_title="TOG Price Predictor",
     page_icon="🏢",
-    layout="centered",
+    layout="wide",
 )
+
+
+# ============================================================
+# LOAD MODEL METRICS
+# ============================================================
+
+metrics_path = Path("reports/metrics.json")
+
+metrics = {}
+
+if metrics_path.exists():
+    with open(metrics_path, "r", encoding="utf-8") as f:
+        metrics = json.load(f)
 
 
 # ============================================================
@@ -33,14 +46,17 @@ st.title("🏢 TOG Price Predictor")
 
 st.write(
     """
-    Herramienta para estimar el precio de un departamento
-    en la Zona Metropolitana de Guadalajara.
+    Estima el precio de un departamento en la Zona Metropolitana
+    de Guadalajara a partir de sus características y las del desarrollo.
     """
 )
 
 st.caption(
-    "Modelo predictivo: Ridge Regression"
+    "La estimación es generada por un modelo de Machine Learning "
+    "Ridge Regression."
 )
+
+st.divider()
 
 
 # ============================================================
@@ -55,92 +71,116 @@ classifications = get_classification_options()
 # INPUT FORM
 # ============================================================
 
+st.subheader("1. Captura las características")
+
+st.write(
+    "Completa los datos del departamento y del desarrollo."
+)
+
 with st.form("prediction_form"):
 
-    st.subheader("Características del departamento")
+    col_unit, col_development = st.columns(2)
 
-    town = st.selectbox(
-        "Municipio",
-        options=towns,
-    )
+    # --------------------------------------------------------
+    # UNIT DATA
+    # --------------------------------------------------------
 
-    classification = st.selectbox(
-        "Clasificación SOFTEC",
-        options=classifications,
-    )
+    with col_unit:
 
-    sqm = st.number_input(
-        "Superficie interior (m²)",
-        min_value=1.0,
-        value=85.0,
-        step=1.0,
-    )
+        st.markdown("### 🏠 Departamento")
 
-    terrace = st.number_input(
-        "Terraza (m²)",
-        min_value=0.0,
-        value=0.0,
-        step=1.0,
-    )
+        town = st.selectbox(
+            "Municipio",
+            options=towns,
+        )
 
-    bhk = st.number_input(
-        "Recámaras",
-        min_value=0,
-        value=2,
-        step=1,
-    )
+        classification = st.selectbox(
+            "Clasificación del producto (SOFTEC)",
+            options=classifications,
+        )
 
-    park_u = st.number_input(
-        "Cajones de estacionamiento",
-        min_value=0,
-        value=1,
-        step=1,
-    )
+        sqm = st.number_input(
+            "Superficie interior (m²)",
+            min_value=1.0,
+            value=85.0,
+            step=1.0,
+        )
 
-    levels = st.number_input(
-        "Niveles del desarrollo",
-        min_value=1,
-        value=8,
-        step=1,
-    )
+        terrace = st.number_input(
+            "Terraza (m²)",
+            min_value=0.0,
+            value=0.0,
+            step=1.0,
+        )
 
-    months_in_sale = st.number_input(
-        "Meses en venta",
-        min_value=0.0,
-        value=12.0,
-        step=1.0,
-    )
+        bhk = st.number_input(
+            "Recámaras",
+            min_value=0,
+            value=2,
+            step=1,
+        )
 
-    total_units = st.number_input(
-        "Unidades totales",
-        min_value=1.0,
-        value=100.0,
-        step=1.0,
-    )
+        park_u = st.number_input(
+            "Cajones de estacionamiento",
+            min_value=0,
+            value=1,
+            step=1,
+        )
 
-    master_plan_units = st.number_input(
-        "Unidades del master plan",
-        min_value=1.0,
-        value=100.0,
-        step=1.0,
-    )
+    # --------------------------------------------------------
+    # DEVELOPMENT DATA
+    # --------------------------------------------------------
 
-    inventory = st.number_input(
-        "Inventario disponible",
-        min_value=0.0,
-        value=30.0,
-        step=1.0,
-    )
+    with col_development:
 
-    months_to_delivery = st.number_input(
-        "Meses para entrega",
-        min_value=0.0,
-        value=12.0,
-        step=1.0,
-    )
+        st.markdown("### 🏗️ Desarrollo")
+
+        levels = st.number_input(
+            "Niveles del desarrollo",
+            min_value=1,
+            value=8,
+            step=1,
+        )
+
+        months_in_sale = st.number_input(
+            "Meses en venta",
+            min_value=0.0,
+            value=12.0,
+            step=1.0,
+        )
+
+        total_units = st.number_input(
+            "Unidades totales",
+            min_value=1.0,
+            value=100.0,
+            step=1.0,
+        )
+
+        master_plan_units = st.number_input(
+            "Unidades del master plan",
+            min_value=1.0,
+            value=100.0,
+            step=1.0,
+        )
+
+        inventory = st.number_input(
+            "Inventario disponible",
+            min_value=0.0,
+            value=30.0,
+            step=1.0,
+        )
+
+        months_to_delivery = st.number_input(
+            "Meses para entrega",
+            min_value=0.0,
+            value=12.0,
+            step=1.0,
+        )
+
+    st.write("")
 
     submitted = st.form_submit_button(
-        "Estimar precio",
+        "Calcular precio estimado",
         use_container_width=True,
     )
 
@@ -170,20 +210,118 @@ if submitted:
 
         prediction = predict_price(input_df)
 
+        price_per_sqm = prediction / sqm
+
         st.divider()
 
-        st.subheader("Resultado")
+        st.subheader("2. Resultado de la estimación")
 
-        st.metric(
-            label="Precio estimado",
-            value=f"${prediction:,.0f} MXN",
+        result_col1, result_col2 = st.columns(2)
+
+        with result_col1:
+
+            st.metric(
+                label="Precio estimado",
+                value=f"${prediction:,.0f} MXN",
+            )
+
+        with result_col2:
+
+            st.metric(
+                label="Precio estimado por m² interior",
+                value=f"${price_per_sqm:,.0f} MXN/m²",
+            )
+
+        st.success(
+            "Predicción generada correctamente."
         )
 
-        st.caption(
-            "El resultado es una estimación estadística basada "
-            "en las características capturadas y en los datos "
-            "utilizados para entrenar el modelo."
+        # ----------------------------------------------------
+        # SIMPLE EXPLANATION
+        # ----------------------------------------------------
+
+        st.markdown("### ¿Cómo interpretar este resultado?")
+
+        st.write(
+            f"""
+            Para un departamento de **{sqm:,.0f} m² interiores**
+            ubicado en **{town}**, el modelo estima un precio de
+            **${prediction:,.0f} MXN**.
+            """
         )
+
+        st.write(
+            f"""
+            Esto equivale aproximadamente a
+            **${price_per_sqm:,.0f} MXN por m² interior**.
+            """
+        )
+
+        if "MAE_test_pesos" in metrics:
+
+            mae = metrics["MAE_test_pesos"]
+
+            st.info(
+                f"Como referencia, en el conjunto de prueba el modelo "
+                f"tuvo un error absoluto promedio (MAE) de "
+                f"${mae:,.0f} MXN."
+            )
+
+            st.caption(
+                "El MAE describe el error promedio observado durante "
+                "la evaluación del modelo. No representa un intervalo "
+                "de confianza para esta predicción individual."
+            )
+
+        # ----------------------------------------------------
+        # INPUT SUMMARY
+        # ----------------------------------------------------
+
+        with st.expander("Ver datos utilizados para esta estimación"):
+
+            summary_col1, summary_col2 = st.columns(2)
+
+            with summary_col1:
+
+                st.write(f"**Municipio:** {town}")
+                st.write(
+                    f"**Clasificación SOFTEC:** {classification}"
+                )
+                st.write(
+                    f"**Superficie interior:** {sqm:,.0f} m²"
+                )
+                st.write(
+                    f"**Terraza:** {terrace:,.0f} m²"
+                )
+                st.write(
+                    f"**Recámaras:** {bhk}"
+                )
+                st.write(
+                    f"**Estacionamientos:** {park_u}"
+                )
+
+            with summary_col2:
+
+                st.write(
+                    f"**Niveles:** {levels}"
+                )
+                st.write(
+                    f"**Meses en venta:** {months_in_sale:,.0f}"
+                )
+                st.write(
+                    f"**Unidades totales:** {total_units:,.0f}"
+                )
+                st.write(
+                    f"**Unidades master plan:** "
+                    f"{master_plan_units:,.0f}"
+                )
+                st.write(
+                    f"**Inventario:** {inventory:,.0f}"
+                )
+                st.write(
+                    f"**Meses para entrega:** "
+                    f"{months_to_delivery:,.0f}"
+                )
 
     except Exception as error:
 
@@ -193,47 +331,73 @@ if submitted:
 
 
 # ============================================================
-# MODEL METRICS
+# MODEL INFORMATION
 # ============================================================
 
 st.divider()
 
-st.subheader("Desempeño del modelo")
+with st.expander("📊 Información técnica del modelo"):
 
-metrics_path = Path("reports/metrics.json")
-
-if metrics_path.exists():
-
-    with open(metrics_path, "r", encoding="utf-8") as f:
-        metrics = json.load(f)
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric(
-            "R² Test",
-            f"{metrics.get('R2_test', 0):.3f}",
-        )
-
-    with col2:
-        st.metric(
-            "MAE",
-            f"${metrics.get('MAE_test_pesos', 0):,.0f}",
-        )
-
-    with col3:
-        st.metric(
-            "RMSE",
-            f"${metrics.get('RMSE_test_pesos', 0):,.0f}",
-        )
-
-    st.caption(
-        "MAE y RMSE están expresados en pesos mexicanos."
+    st.write(
+        """
+        El modelo actual es **Ridge Regression**.
+        Las siguientes métricas corresponden al conjunto de prueba.
+        """
     )
 
-else:
+    if metrics:
 
-    st.warning(
-        "No se encontró reports/metrics.json. "
-        "Ejecuta primero: dvc repro"
-    )
+        metric_col1, metric_col2, metric_col3 = st.columns(3)
+
+        with metric_col1:
+
+            st.metric(
+                "R² Test",
+                f"{metrics.get('R2_test', 0):.3f}",
+            )
+
+        with metric_col2:
+
+            st.metric(
+                "MAE",
+                f"${metrics.get('MAE_test_pesos', 0):,.0f}",
+            )
+
+        with metric_col3:
+
+            st.metric(
+                "RMSE",
+                f"${metrics.get('RMSE_test_pesos', 0):,.0f}",
+            )
+
+        st.write(
+            """
+            **R²:** proporción de la variabilidad del precio que el
+            modelo logra explicar en los datos de prueba.
+
+            **MAE:** diferencia absoluta promedio entre el precio real
+            y el precio estimado.
+
+            **RMSE:** medida del error que penaliza con mayor fuerza
+            las predicciones con errores grandes.
+            """
+        )
+
+    else:
+
+        st.warning(
+            "No se encontró reports/metrics.json. "
+            "Ejecuta primero: dvc repro"
+        )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.divider()
+
+st.caption(
+    "TOG Price Predictor · La predicción es una estimación "
+    "estadística y no sustituye una valuación inmobiliaria formal."
+)
