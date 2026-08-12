@@ -1,5 +1,5 @@
 # TOG PRICE PREDICTOR - STREAMLIT APP
-# V1.1 - Interfaz orientada a usuarios no técnicos.
+# V1.2 - Interfaz amigable, ayudas de captura y validaciones.
 
 from pathlib import Path
 import json
@@ -74,7 +74,8 @@ classifications = get_classification_options()
 st.subheader("1. Captura las características")
 
 st.write(
-    "Completa los datos del departamento y del desarrollo."
+    "Completa los datos del departamento y del desarrollo. "
+    "Los campos incluyen ayudas para facilitar la captura."
 )
 
 with st.form("prediction_form"):
@@ -92,32 +93,52 @@ with st.form("prediction_form"):
         town = st.selectbox(
             "Municipio",
             options=towns,
+            help=(
+                "Municipio de la Zona Metropolitana de Guadalajara "
+                "donde se ubica el departamento."
+            ),
         )
 
         classification = st.selectbox(
-            "Clasificación del producto (SOFTEC)",
+            "Clasificación SOFTEC (código)",
             options=classifications,
+            help=(
+                "Código de clasificación utilizado en el dataset "
+                "original. Se conserva el código SOFTEC para no "
+                "alterar la variable que utiliza el modelo."
+            ),
         )
 
         sqm = st.number_input(
-            "Superficie interior (m²)",
+            "Superficie interior del departamento (m²)",
             min_value=1.0,
             value=85.0,
             step=1.0,
+            format="%.1f",
+            help=(
+                "Superficie interior habitable del departamento, "
+                "sin incluir la terraza."
+            ),
         )
 
         terrace = st.number_input(
-            "Terraza (m²)",
+            "Superficie de terraza (m²)",
             min_value=0.0,
             value=0.0,
             step=1.0,
+            format="%.1f",
+            help=(
+                "Superficie de terraza reportada para la unidad. "
+                "Si no tiene terraza, captura 0."
+            ),
         )
 
         bhk = st.number_input(
-            "Recámaras",
+            "Número de recámaras",
             min_value=0,
             value=2,
             step=1,
+            help="Número de recámaras del departamento.",
         )
 
         park_u = st.number_input(
@@ -125,6 +146,10 @@ with st.form("prediction_form"):
             min_value=0,
             value=1,
             step=1,
+            help=(
+                "Número de cajones de estacionamiento asignados "
+                "a la unidad."
+            ),
         )
 
     # --------------------------------------------------------
@@ -136,45 +161,68 @@ with st.form("prediction_form"):
         st.markdown("### 🏗️ Desarrollo")
 
         levels = st.number_input(
-            "Niveles del desarrollo",
+            "Número de niveles del desarrollo",
             min_value=1,
             value=8,
             step=1,
+            help=(
+                "Número de niveles reportados para el desarrollo."
+            ),
         )
 
         months_in_sale = st.number_input(
             "Meses en venta",
-            min_value=0.0,
-            value=12.0,
-            step=1.0,
+            min_value=0,
+            value=12,
+            step=1,
+            help=(
+                "Número de meses que el desarrollo lleva "
+                "en comercialización."
+            ),
         )
 
         total_units = st.number_input(
-            "Unidades totales",
-            min_value=1.0,
-            value=100.0,
-            step=1.0,
+            "Unidades totales del desarrollo",
+            min_value=1,
+            value=100,
+            step=1,
+            help=(
+                "Número total de unidades reportadas para "
+                "el desarrollo."
+            ),
         )
 
         master_plan_units = st.number_input(
             "Unidades del master plan",
-            min_value=1.0,
-            value=100.0,
-            step=1.0,
+            min_value=1,
+            value=100,
+            step=1,
+            help=(
+                "Número de unidades reportadas en el master plan "
+                "del proyecto."
+            ),
         )
 
         inventory = st.number_input(
             "Inventario disponible",
-            min_value=0.0,
-            value=30.0,
-            step=1.0,
+            min_value=0,
+            value=30,
+            step=1,
+            help=(
+                "Número de unidades reportadas actualmente como "
+                "inventario disponible."
+            ),
         )
 
         months_to_delivery = st.number_input(
             "Meses para entrega",
-            min_value=0.0,
-            value=12.0,
-            step=1.0,
+            min_value=0,
+            value=12,
+            step=1,
+            help=(
+                "Número de meses reportados hasta la entrega "
+                "del desarrollo."
+            ),
         )
 
     st.write("")
@@ -191,143 +239,184 @@ with st.form("prediction_form"):
 
 if submitted:
 
-    try:
+    # --------------------------------------------------------
+    # INPUT VALIDATION
+    # --------------------------------------------------------
 
-        input_df = build_input(
-            town=town,
-            classification=classification,
-            sqm=sqm,
-            terrace=terrace,
-            bhk=bhk,
-            park_u=park_u,
-            levels=levels,
-            months_in_sale=months_in_sale,
-            total_units=total_units,
-            master_plan_units=master_plan_units,
-            inventory=inventory,
-            months_to_delivery=months_to_delivery,
+    validation_errors = []
+
+    if inventory > total_units:
+        validation_errors.append(
+            "El inventario disponible no puede ser mayor "
+            "que las unidades totales del desarrollo."
         )
 
-        prediction = predict_price(input_df)
-
-        price_per_sqm = prediction / sqm
+    if validation_errors:
 
         st.divider()
 
-        st.subheader("2. Resultado de la estimación")
+        st.error("Revisa los datos capturados antes de continuar.")
 
-        result_col1, result_col2 = st.columns(2)
+        for validation_error in validation_errors:
+            st.write(f"- {validation_error}")
 
-        with result_col1:
+    else:
 
-            st.metric(
-                label="Precio estimado",
-                value=f"${prediction:,.0f} MXN",
+        try:
+
+            input_df = build_input(
+                town=town,
+                classification=classification,
+                sqm=sqm,
+                terrace=terrace,
+                bhk=bhk,
+                park_u=park_u,
+                levels=levels,
+                months_in_sale=months_in_sale,
+                total_units=total_units,
+                master_plan_units=master_plan_units,
+                inventory=inventory,
+                months_to_delivery=months_to_delivery,
             )
 
-        with result_col2:
+            prediction = predict_price(input_df)
 
-            st.metric(
-                label="Precio estimado por m² interior",
-                value=f"${price_per_sqm:,.0f} MXN/m²",
+            price_per_sqm = prediction / sqm
+
+            st.divider()
+
+            st.subheader("2. Resultado de la estimación")
+
+            result_col1, result_col2 = st.columns(2)
+
+            with result_col1:
+
+                st.metric(
+                    label="Precio estimado",
+                    value=f"${prediction:,.0f} MXN",
+                )
+
+            with result_col2:
+
+                st.metric(
+                    label="Precio estimado por m² interior",
+                    value=f"${price_per_sqm:,.0f} MXN/m²",
+                )
+
+            st.success(
+                "Predicción generada correctamente."
             )
 
-        st.success(
-            "Predicción generada correctamente."
-        )
+            # ------------------------------------------------
+            # SIMPLE EXPLANATION
+            # ------------------------------------------------
 
-        # ----------------------------------------------------
-        # SIMPLE EXPLANATION
-        # ----------------------------------------------------
+            st.markdown("### ¿Cómo interpretar este resultado?")
 
-        st.markdown("### ¿Cómo interpretar este resultado?")
-
-        st.write(
-            f"""
-            Para un departamento de **{sqm:,.0f} m² interiores**
-            ubicado en **{town}**, el modelo estima un precio de
-            **${prediction:,.0f} MXN**.
-            """
-        )
-
-        st.write(
-            f"""
-            Esto equivale aproximadamente a
-            **${price_per_sqm:,.0f} MXN por m² interior**.
-            """
-        )
-
-        if "MAE_test_pesos" in metrics:
-
-            mae = metrics["MAE_test_pesos"]
-
-            st.info(
-                f"Como referencia, en el conjunto de prueba el modelo "
-                f"tuvo un error absoluto promedio (MAE) de "
-                f"${mae:,.0f} MXN."
+            st.write(
+                f"""
+                Para un departamento de **{sqm:,.0f} m² interiores**
+                ubicado en **{town}**, el modelo estima un precio de
+                **${prediction:,.0f} MXN**.
+                """
             )
 
-            st.caption(
-                "El MAE describe el error promedio observado durante "
-                "la evaluación del modelo. No representa un intervalo "
-                "de confianza para esta predicción individual."
+            st.write(
+                f"""
+                Esto equivale aproximadamente a
+                **${price_per_sqm:,.0f} MXN por m² interior**.
+                """
             )
 
-        # ----------------------------------------------------
-        # INPUT SUMMARY
-        # ----------------------------------------------------
+            if "MAE_test_pesos" in metrics:
 
-        with st.expander("Ver datos utilizados para esta estimación"):
+                mae = metrics["MAE_test_pesos"]
 
-            summary_col1, summary_col2 = st.columns(2)
-
-            with summary_col1:
-
-                st.write(f"**Municipio:** {town}")
-                st.write(
-                    f"**Clasificación SOFTEC:** {classification}"
-                )
-                st.write(
-                    f"**Superficie interior:** {sqm:,.0f} m²"
-                )
-                st.write(
-                    f"**Terraza:** {terrace:,.0f} m²"
-                )
-                st.write(
-                    f"**Recámaras:** {bhk}"
-                )
-                st.write(
-                    f"**Estacionamientos:** {park_u}"
+                st.info(
+                    f"Como referencia, en el conjunto de prueba el "
+                    f"modelo tuvo un error absoluto promedio (MAE) "
+                    f"de ${mae:,.0f} MXN."
                 )
 
-            with summary_col2:
-
-                st.write(
-                    f"**Niveles:** {levels}"
-                )
-                st.write(
-                    f"**Meses en venta:** {months_in_sale:,.0f}"
-                )
-                st.write(
-                    f"**Unidades totales:** {total_units:,.0f}"
-                )
-                st.write(
-                    f"**Unidades master plan:** "
-                    f"{master_plan_units:,.0f}"
-                )
-                st.write(
-                    f"**Inventario:** {inventory:,.0f}"
-                )
-                st.write(
-                    f"**Meses para entrega:** "
-                    f"{months_to_delivery:,.0f}"
+                st.caption(
+                    "El MAE describe el error promedio observado "
+                    "durante la evaluación del modelo. No representa "
+                    "un intervalo de confianza para esta predicción "
+                    "individual."
                 )
 
-    except Exception as error:
+            # ------------------------------------------------
+            # INPUT SUMMARY
+            # ------------------------------------------------
 
-        st.error(
-            f"No fue posible generar la predicción: {error}"
-        )
+            with st.expander(
+                "Ver datos utilizados para esta estimación"
+            ):
+
+                summary_col1, summary_col2 = st.columns(2)
+
+                with summary_col1:
+
+                    st.write(
+                        f"**Municipio:** {town}"
+                    )
+
+                    st.write(
+                        f"**Clasificación SOFTEC:** "
+                        f"{classification}"
+                    )
+
+                    st.write(
+                        f"**Superficie interior:** "
+                        f"{sqm:,.1f} m²"
+                    )
+
+                    st.write(
+                        f"**Terraza:** "
+                        f"{terrace:,.1f} m²"
+                    )
+
+                    st.write(
+                        f"**Recámaras:** {bhk}"
+                    )
+
+                    st.write(
+                        f"**Estacionamientos:** {park_u}"
+                    )
+
+                with summary_col2:
+
+                    st.write(
+                        f"**Niveles:** {levels}"
+                    )
+
+                    st.write(
+                        f"**Meses en venta:** {months_in_sale}"
+                    )
+
+                    st.write(
+                        f"**Unidades totales:** {total_units}"
+                    )
+
+                    st.write(
+                        f"**Unidades master plan:** "
+                        f"{master_plan_units}"
+                    )
+
+                    st.write(
+                        f"**Inventario:** {inventory}"
+                    )
+
+                    st.write(
+                        f"**Meses para entrega:** "
+                        f"{months_to_delivery}"
+                    )
+
+        except Exception as error:
+
+            st.error(
+                f"No fue posible generar la predicción: {error}"
+            )
 
 
 # ============================================================
