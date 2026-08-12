@@ -108,9 +108,18 @@ def build_input(
     else:
         print(f"Advertencia: el municipio '{town}' no existe en feature_names.")
         print("Municipios/columnas disponibles:")
-        print([col for col in feature_names if col not in input_values.keys()])
+        print(
+            [
+                col
+                for col in feature_names
+                if col not in input_values.keys()
+            ]
+        )
 
-    input_df = pd.DataFrame([row], columns=feature_names)
+    input_df = pd.DataFrame(
+        [row],
+        columns=feature_names,
+    )
 
     return input_df
 
@@ -121,7 +130,8 @@ def build_input(
 
 def predict_price(input_df: pd.DataFrame) -> float:
     """
-    Escala variables, predice precio estandarizado y regresa precio en pesos.
+    Escala variables, predice precio estandarizado
+    y regresa precio en pesos.
     """
 
     x_scaled = scaler_X.transform(input_df.values)
@@ -133,6 +143,50 @@ def predict_price(input_df: pd.DataFrame) -> float:
     ).ravel()[0]
 
     return float(price_pred)
+
+
+# ============================================================
+# OPTIONS FOR VISUAL APP
+# ============================================================
+
+def get_classification_options() -> list[str]:
+    """
+    Regresa las clasificaciones disponibles
+    según params.yaml.
+    """
+
+    return list(
+        config["prepare"]["classification_mapping"].keys()
+    )
+
+
+def get_available_towns() -> list[str]:
+    """
+    Regresa los municipios disponibles a partir
+    de las columnas utilizadas por el modelo.
+    """
+
+    non_town_features = {
+        "classification",
+        "sqm",
+        "terrace",
+        "bhk",
+        "park_u",
+        "levels",
+        "months_in_sale",
+        "total_units",
+        "master_plan_units",
+        "inventory",
+        "months_to_delivery",
+    }
+
+    towns = [
+        feature
+        for feature in feature_names
+        if feature not in non_town_features
+    ]
+
+    return sorted(towns)
 
 
 # ============================================================
