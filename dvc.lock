@@ -9,8 +9,8 @@ stages:
       size: 130459
     - path: src/stages/prepare_data.py
       hash: md5
-      md5: 0ea7fd965c29b07c174b8c74ffda05cc
-      size: 7843
+      md5: 429a6915ecf0dd88f950115fa2d50da3
+      size: 7872
     params:
       params.yaml:
         base.numpy_seed: 33
@@ -31,10 +31,8 @@ stages:
         - first_price
         - initial_date
         - entry_date
-        - update_date
         - fin_op
         - inventory_months
-        prepare.delivery_base_date: '2022-09-01'
         prepare.final_drop_columns:
         - colony
         - town
@@ -52,15 +50,15 @@ stages:
     outs:
     - path: data/processed/prepared_data.csv
       hash: md5
-      md5: cdf54375197a529860bc383404627f14
-      size: 56062
+      md5: 946c82fc82ac83d7a580687a55a7b98b
+      size: 58080
   split_data:
     cmd: python src/stages/split_data.py
     deps:
     - path: data/processed/prepared_data.csv
       hash: md5
-      md5: cdf54375197a529860bc383404627f14
-      size: 56062
+      md5: 946c82fc82ac83d7a580687a55a7b98b
+      size: 58080
     - path: src/stages/split_data.py
       hash: md5
       md5: d133c5d2af71167526f9fc86d77fe1d3
@@ -78,19 +76,19 @@ stages:
     outs:
     - path: data/processed/test_data.csv
       hash: md5
-      md5: b863b4c73929eed358eeef9c6d36150d
-      size: 39288
+      md5: 479cba7f00297bb067a871f0b2f9658e
+      size: 39285
     - path: data/processed/train_data.csv
       hash: md5
-      md5: 6862116e3279836544b5c4e518313a95
-      size: 154997
+      md5: bceb5566c8157681900202200f4ed637
+      size: 154972
     - path: models/feature_names.json
       hash: md5
       md5: 7fe1b805532edf3eebcdfef7c3561ccb
       size: 331
     - path: models/scaler_X.pkl
       hash: md5
-      md5: ea1c59afbf6f447127382ebb79244f74
+      md5: d27fa134b24aaddebafd68ca62030287
       size: 1007
     - path: models/scaler_Y.pkl
       hash: md5
@@ -101,8 +99,8 @@ stages:
     deps:
     - path: data/processed/train_data.csv
       hash: md5
-      md5: 6862116e3279836544b5c4e518313a95
-      size: 154997
+      md5: bceb5566c8157681900202200f4ed637
+      size: 154972
     - path: src/stages/train.py
       hash: md5
       md5: 622bad0a7cd8b31cac435387a05cf255
@@ -129,22 +127,22 @@ stages:
     outs:
     - path: models/modelo_final.pkl
       hash: md5
-      md5: aea2a4a701ebaa429dfddd28ae673986
+      md5: f66b5f8ac9fff7dd8497e4f4b00cd675
       size: 667
   evaluate:
     cmd: python src/stages/evaluate.py
     deps:
     - path: data/processed/test_data.csv
       hash: md5
-      md5: b863b4c73929eed358eeef9c6d36150d
-      size: 39288
+      md5: 479cba7f00297bb067a871f0b2f9658e
+      size: 39285
     - path: data/processed/train_data.csv
       hash: md5
-      md5: 6862116e3279836544b5c4e518313a95
-      size: 154997
+      md5: bceb5566c8157681900202200f4ed637
+      size: 154972
     - path: models/modelo_final.pkl
       hash: md5
-      md5: aea2a4a701ebaa429dfddd28ae673986
+      md5: f66b5f8ac9fff7dd8497e4f4b00cd675
       size: 667
     - path: models/scaler_Y.pkl
       hash: md5
@@ -164,5 +162,5 @@ stages:
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: 4d733bd9b8f9aa8f771a34304dea9d61
-      size: 247
+      md5: dc82c26b2b75c332062c3d3bd8b7f519
+      size: 248

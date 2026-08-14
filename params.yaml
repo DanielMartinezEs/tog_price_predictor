@@ -4,7 +4,6 @@ data_load:
   raw_data_path: data/raw/Guadalajara 4Q22.xlsx
 prepare:
   prepared_data_path: data/processed/prepared_data.csv
-  delivery_base_date: '2022-09-01'
   towns_to_drop:
   - Chapala
   - El Salto
@@ -26,7 +25,6 @@ prepare:
   - first_price
   - initial_date
   - entry_date
-  - update_date
   - fin_op
   - inventory_months
   final_drop_columns:

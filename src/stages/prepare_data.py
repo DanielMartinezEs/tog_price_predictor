@@ -174,18 +174,20 @@ data = data.drop(
 # FEATURE: MONTHS TO DELIVERY
 # ============================================================
 
-base_date = pd.to_datetime(config["prepare"]["delivery_base_date"])
-
+data["update_date"] = pd.to_datetime(data["update_date"])
 data["delivery_date"] = pd.to_datetime(data["delivery_date"])
 
-def months_diff(fecha):
-    rd = relativedelta(fecha, base_date)
+def months_diff(row):
+    rd = relativedelta(row["delivery_date"], row["update_date"])
     return rd.years * 12 + rd.months + rd.days / 30.44
 
-data["months_to_delivery"] = data["delivery_date"].apply(months_diff)
+data["months_to_delivery"] = data.apply(months_diff, axis=1)
 data.loc[data["months_to_delivery"] < 0, "months_to_delivery"] = 0
-data = data.drop(["delivery_date"], axis="columns")
 
+data = data.drop(
+    ["update_date", "delivery_date"],
+    axis="columns"
+)
 
 # ============================================================
 # FEATURE: CLASSIFICATION MAPPING

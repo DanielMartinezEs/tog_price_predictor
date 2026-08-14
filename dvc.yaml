@@ -8,7 +8,6 @@ stages:
       - base.numpy_seed
       - data_load.raw_data_path
       - prepare.prepared_data_path
-      - prepare.delivery_base_date
       - prepare.towns_to_drop
       - prepare.price_per_sqm_max
       - prepare.sqm_max
