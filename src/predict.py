@@ -106,14 +106,8 @@ def build_input(
     if town in row:
         row[town] = 1.0
     else:
-        print(f"Advertencia: el municipio '{town}' no existe en feature_names.")
-        print("Municipios/columnas disponibles:")
-        print(
-            [
-                col
-                for col in feature_names
-                if col not in input_values.keys()
-            ]
+        raise ValueError(
+        f"El municipio '{town}' no está disponible para este modelo."
         )
 
     input_df = pd.DataFrame(

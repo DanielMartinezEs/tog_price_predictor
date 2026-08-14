@@ -228,10 +228,10 @@ def validate_prediction_inputs(
     # EXPLICIT MODEL DOMAIN
     # --------------------------------------------------------
 
-    if input_values["sqm"] > SQM_MAX:
+    if input_values["sqm"] >= SQM_MAX:
 
         errors.append(
-            f"La superficie interior no puede superar "
+            f"La superficie interior debe ser menor a "
             f"{SQM_MAX:,.0f} m² para este modelo. "
             f"El pipeline fue preparado con ese límite máximo."
         )
