@@ -56,9 +56,9 @@ st.title("🏢 TOG Price Predictor")
 
 st.write(
     """
-    Estima el precio de un departamento en la Zona Metropolitana
-    de Guadalajara a partir de sus características y las del
-    desarrollo.
+    Estima el precio de un departamento a partir de sus características
+    y de la información correspondiente a la plaza Guadalajara de DIME
+    utilizada para entrenar el modelo.
     """
 )
 
