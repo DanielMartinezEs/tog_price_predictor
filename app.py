@@ -56,9 +56,9 @@ st.title("🏢 TOG Price Predictor")
 
 st.write(
     """
-    Estima el precio de un departamento a partir de sus características
-    y de la información correspondiente a la plaza Guadalajara de DIME
-    utilizada para entrenar el modelo.
+    Estima el precio de un departamento a partir de sus
+    características y de la información correspondiente a la
+    plaza Guadalajara de DIME utilizada para entrenar el modelo.
     """
 )
 
@@ -179,9 +179,9 @@ def apply_ai_extraction(
     extracted: dict,
 ) -> tuple[list[str], list[str], list[str]]:
     """
-    Aplica al formulario únicamente valores válidos extraídos por la IA.
+    Aplica al formulario unicamente valores validos extraidos por la IA.
 
-    Los campos no encontrados conservan el valor que ya tenía el
+    Los campos no encontrados conservan el valor que ya tenia el
     formulario para que el usuario pueda revisarlos o completarlos.
     """
 
@@ -307,7 +307,7 @@ if interpret_submitted:
         "ai_last_error"
     ] = None
 
-    # Cada nueva interpretación requiere una nueva revisión
+    # Cada nueva interpretacion requiere una nueva revision
     # de posibles campos faltantes.
     st.session_state[
         "ai_missing_confirmed"
@@ -532,7 +532,8 @@ with st.form("prediction_form"):
             options=towns,
             key="town",
             help=(
-                "Municipio donde se ubica el departamento."
+                "Municipio donde se localiza el desarrollo "
+                "inmobiliario."
             ),
         )
 
@@ -541,8 +542,8 @@ with st.form("prediction_form"):
             options=classifications,
             key="classification",
             help=(
-                "Código de clasificación utilizado en el dataset "
-                "original y por el modelo."
+                "Clasificación del producto de acuerdo con las "
+                "categorías utilizadas por SOFTEC."
             ),
         )
 
@@ -553,7 +554,8 @@ with st.form("prediction_form"):
             format="%.1f",
             key="sqm",
             help=(
-                "Superficie interior habitable, sin incluir terraza."
+                "Superficie habitable interior del departamento "
+                "en metros cuadrados, sin incluir terraza."
             ),
         )
 
@@ -564,7 +566,8 @@ with st.form("prediction_form"):
             format="%.1f",
             key="terrace",
             help=(
-                "Si el departamento no tiene terraza, captura 0."
+                "Superficie de terraza del departamento en metros "
+                "cuadrados. Captura 0 si no cuenta con terraza."
             ),
         )
 
@@ -573,6 +576,9 @@ with st.form("prediction_form"):
             min_value=0,
             step=1,
             key="bhk",
+            help=(
+                "Número de recámaras del departamento."
+            ),
         )
 
         park_u = st.number_input(
@@ -580,6 +586,10 @@ with st.form("prediction_form"):
             min_value=0,
             step=1,
             key="park_u",
+            help=(
+                "Número de cajones de estacionamiento "
+                "correspondientes al departamento."
+            ),
         )
 
     # --------------------------------------------------------
@@ -595,6 +605,10 @@ with st.form("prediction_form"):
             min_value=1,
             step=1,
             key="levels",
+            help=(
+                "Número total de niveles del desarrollo "
+                "inmobiliario."
+            ),
         )
 
         months_in_sale = st.number_input(
@@ -603,8 +617,8 @@ with st.form("prediction_form"):
             step=1,
             key="months_in_sale",
             help=(
-                "Meses que el desarrollo lleva "
-                "en comercialización."
+                "Tiempo transcurrido desde el inicio de "
+                "comercialización del desarrollo."
             ),
         )
 
@@ -613,6 +627,10 @@ with st.form("prediction_form"):
             min_value=1,
             step=1,
             key="total_units",
+            help=(
+                "Número de unidades correspondientes a la etapa "
+                "disponible del desarrollo."
+            ),
         )
 
         master_plan_units = st.number_input(
@@ -620,6 +638,10 @@ with st.form("prediction_form"):
             min_value=1,
             step=1,
             key="master_plan_units",
+            help=(
+                "Total de unidades proyectadas para el desarrollo, "
+                "incluyendo etapas construidas y futuras."
+            ),
         )
 
         inventory = st.number_input(
@@ -627,6 +649,10 @@ with st.form("prediction_form"):
             min_value=0,
             step=1,
             key="inventory",
+            help=(
+                "Número de unidades disponibles para venta "
+                "dentro del desarrollo."
+            ),
         )
 
         months_to_delivery = st.number_input(
@@ -634,6 +660,10 @@ with st.form("prediction_form"):
             min_value=0,
             step=1,
             key="months_to_delivery",
+            help=(
+                "Meses restantes entre la fecha de actualización "
+                "de la información y la fecha prevista de entrega."
+            ),
         )
 
     st.write("")
