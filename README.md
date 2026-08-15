@@ -131,7 +131,7 @@ data/raw/Guadalajara 4Q22.xlsx
 
 El archivo corresponde a información DIME de Softec adquirida por la empresa donde se desarrolló el proyecto.
 
-**El dataset original no se distribuye ni forma parte de este repositorio público.**
+**El dataset original no se distribuye públicamente ni forma parte de este repositorio público. Para fines de revisión académica, el acceso puede proporcionarse de manera privada y controlada cuando corresponda.**
 
 La reproducción completa desde los datos originales requiere contar previamente con acceso autorizado al archivo y colocarlo con el nombre esperado en:
 
